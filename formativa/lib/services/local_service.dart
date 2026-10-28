@@ -26,21 +26,20 @@ class LocalService {
 
   Stream<List<Local>> listarLocais() {
     if (!_firebaseDisponivel) {
-      return Stream.value(const []);
+      return Stream.error(
+        StateError(
+          'Firebase não foi inicializado. Configure o projeto Firebase.',
+        ),
+      );
     }
 
-    try {
-      return FirebaseFirestore.instance
-          .collection('locais')
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs
-                .map((doc) => Local.fromMap(doc.id, doc.data()))
-                .toList();
-          });
-    } catch (_) {
-      return Stream.value(const []);
-    }
+    return FirebaseFirestore.instance.collection('locais').snapshots().map((
+      snapshot,
+    ) {
+      return snapshot.docs
+          .map((doc) => Local.fromMap(doc.id, doc.data()))
+          .toList();
+    });
   }
 
   Future<void> adicionar(Local local) async {

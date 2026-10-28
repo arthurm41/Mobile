@@ -41,12 +41,7 @@ void main() {
     });
 
     test('retorna todos quando filtros estão em valores padrão', () {
-      final resultado = filtrarLocais(
-        locais,
-        '',
-        'Todas',
-        'Todos',
-      );
+      final resultado = filtrarLocais(locais, '', 'Todas', 'Todos');
 
       expect(resultado.length, 2);
     });

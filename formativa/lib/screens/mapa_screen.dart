@@ -4,7 +4,14 @@ import 'package:mapa_locais/screens/resultados_screen.dart';
 import 'package:mapa_locais/services/local_service.dart';
 
 class MapaScreen extends StatefulWidget {
-  const MapaScreen({super.key});
+  final String cidadeInicial;
+  final String pesquisaInicial;
+
+  const MapaScreen({
+    super.key,
+    this.cidadeInicial = 'São Paulo',
+    this.pesquisaInicial = '',
+  });
 
   @override
   State<MapaScreen> createState() => _MapaScreenState();
@@ -13,7 +20,7 @@ class MapaScreen extends StatefulWidget {
 class _MapaScreenState extends State<MapaScreen> {
   final LocalService _service = LocalService();
   final TextEditingController _pesquisaController = TextEditingController();
-  String _cidadeSelecionada = 'São Paulo';
+  late String _cidadeSelecionada;
 
   final List<String> _cidades = ['São Paulo', 'Campinas', 'Jundiaí'];
   final List<Offset> _marcadores = [
@@ -23,6 +30,16 @@ class _MapaScreenState extends State<MapaScreen> {
     const Offset(0.36, 0.62),
     const Offset(0.78, 0.68),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_cidades.contains(widget.cidadeInicial)) {
+      _cidades.add(widget.cidadeInicial);
+    }
+    _cidadeSelecionada = widget.cidadeInicial;
+    _pesquisaController.text = widget.pesquisaInicial;
+  }
 
   @override
   void dispose() {
@@ -47,11 +64,32 @@ class _MapaScreenState extends State<MapaScreen> {
     return StreamBuilder<List<Local>>(
       stream: _service.listarLocais(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Mapa de locais'),
+              backgroundColor: const Color(0xFF0F4C81),
+              foregroundColor: Colors.white,
+            ),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Erro ao carregar os locais do Firestore: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }
+
         final locais = snapshot.data ?? [];
-        final locaisExibidos = locais
-            .where((local) =>
-                _cidadeSelecionada == 'Todos' || local.cidade == _cidadeSelecionada)
-            .toList();
+        final locaisExibidos = filtrarLocais(
+          locais,
+          _pesquisaController.text,
+          _cidadeSelecionada,
+          'Todos',
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -71,6 +109,7 @@ class _MapaScreenState extends State<MapaScreen> {
                         Expanded(
                           child: TextField(
                             controller: _pesquisaController,
+                            onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               hintText: 'Pesquisar por nome ou categoria',
                               prefixIcon: const Icon(Icons.search),
@@ -181,48 +220,65 @@ class _MapaScreenState extends State<MapaScreen> {
                                     color: Colors.white.withValues(alpha: 0.7),
                                   ),
                                 ),
-                                ...List.generate(
-                                  locaisExibidos.length > 5
-                                      ? 5
-                                      : locaisExibidos.length,
-                                  (index) {
-                                    final local = locaisExibidos[index];
-                                    final offset = _marcadores[index % _marcadores.length];
+                                ...List.generate(_marcadores.length, (index) {
+                                  final offset =
+                                      _marcadores[index % _marcadores.length];
+                                  if (index >= locaisExibidos.length) {
                                     return Positioned(
                                       left: constraints.maxWidth * offset.dx,
                                       top: constraints.maxHeight * offset.dy,
-                                      child: GestureDetector(
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ResultadosScreen(
-                                              cidadeInicial: _cidadeSelecionada,
-                                              pesquisaInicial: local.nome,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.shade500,
-                                            borderRadius: BorderRadius.circular(18),
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            local.nome.substring(0, 1).toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                      child: Tooltip(
+                                        message: 'Marcador do mapa',
+                                        child: Icon(
+                                          Icons.location_on,
+                                          size: 34,
+                                          color: Colors.blue.shade700,
                                         ),
                                       ),
                                     );
-                                  },
-                                ),
+                                  }
+
+                                  final local = locaisExibidos[index];
+                                  return Positioned(
+                                    left: constraints.maxWidth * offset.dx,
+                                    top: constraints.maxHeight * offset.dy,
+                                    child: GestureDetector(
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ResultadosScreen(
+                                            cidadeInicial: _cidadeSelecionada,
+                                            pesquisaInicial: local.nome,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade500,
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          local.nome.isEmpty
+                                              ? '?'
+                                              : local.nome
+                                                    .substring(0, 1)
+                                                    .toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
                               ],
                             );
                           },
@@ -256,13 +312,17 @@ class _MapaScreenState extends State<MapaScreen> {
                     SizedBox(
                       height: 140,
                       child: ListView.builder(
-                        itemCount: locaisExibidos.length > 3 ? 3 : locaisExibidos.length,
+                        itemCount: locaisExibidos.length > 3
+                            ? 3
+                            : locaisExibidos.length,
                         itemBuilder: (context, index) {
                           final local = locaisExibidos[index];
                           return Card(
                             child: ListTile(
                               title: Text(local.nome),
-                              subtitle: Text('${local.categoria} • ${local.cidade}'),
+                              subtitle: Text(
+                                '${local.categoria} • ${local.cidade}',
+                              ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {
                                 Navigator.push(

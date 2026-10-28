@@ -10,8 +10,11 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } catch (_) {
-    // O projeto pode continuar em modo offline até a configuração real do Firebase.
+  } catch (error, stackTrace) {
+    debugPrint('Falha ao inicializar o Firebase: $error');
+    debugPrintStack(stackTrace: stackTrace);
+    runApp(LocalApp(firebaseInitializationError: error));
+    return;
   }
 
   runApp(const LocalApp());

@@ -25,17 +25,20 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
     final novoValor = !_favorito;
     try {
       await _service.alterarFavorito(widget.local.id, novoValor);
-      setState(() => _favorito = novoValor);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              novoValor ? 'Local adicionado aos favoritos.' : 'Local removido dos favoritos.',
-            ),
-            backgroundColor: novoValor ? Colors.orange : Colors.grey,
-          ),
-        );
+      if (!mounted) {
+        return;
       }
+      setState(() => _favorito = novoValor);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            novoValor
+                ? 'Local adicionado aos favoritos.'
+                : 'Local removido dos favoritos.',
+          ),
+          backgroundColor: novoValor ? Colors.orange : Colors.grey,
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,9 +110,18 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _InfoChip(icon: Icons.star, label: widget.local.avaliacao.toStringAsFixed(1)),
-                _InfoChip(icon: Icons.location_city, label: widget.local.cidade),
-                _InfoChip(icon: Icons.route, label: '${widget.local.distancia.toStringAsFixed(1)} km'),
+                _InfoChip(
+                  icon: Icons.star,
+                  label: widget.local.avaliacao.toStringAsFixed(1),
+                ),
+                _InfoChip(
+                  icon: Icons.location_city,
+                  label: widget.local.cidade,
+                ),
+                _InfoChip(
+                  icon: Icons.route,
+                  label: '${widget.local.distancia.toStringAsFixed(1)} km',
+                ),
                 _InfoChip(icon: Icons.access_time, label: widget.local.horario),
               ],
             ),
@@ -137,8 +149,13 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Mapa em desenvolvimento.')),
+                      Navigator.pushNamed(
+                        context,
+                        '/mapa',
+                        arguments: {
+                          'cidade': widget.local.cidade,
+                          'pesquisa': widget.local.nome,
+                        },
                       );
                     },
                     icon: const Icon(Icons.map_outlined),

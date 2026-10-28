@@ -64,15 +64,15 @@ class Local {
   }
 
   Map<String, dynamic> toMap() => {
-        'nome': nome,
-        'categoria': categoria,
-        'cidade': cidade,
-        'avaliacao': avaliacao,
-        'distancia': distancia,
-        'horario': horario,
-        'descricao': descricao,
-        'favorito': favorito,
-      };
+    'nome': nome,
+    'categoria': categoria,
+    'cidade': cidade,
+    'avaliacao': avaliacao,
+    'distancia': distancia,
+    'horario': horario,
+    'descricao': descricao,
+    'favorito': favorito,
+  };
 }
 
 List<Local> filtrarLocais(
@@ -87,12 +87,11 @@ List<Local> filtrarLocais(
     final correspondeCidade = cidade == 'Todas' || local.cidade == cidade;
     final correspondeCategoria =
         categoria == 'Todos' || local.categoria == categoria;
-    final correspondeTexto = termo.isEmpty ||
+    final correspondeTexto =
+        termo.isEmpty ||
         local.nome.toLowerCase().contains(termo) ||
         local.categoria.toLowerCase().contains(termo);
 
-    return correspondeCidade &&
-        correspondeCategoria &&
-        correspondeTexto;
+    return correspondeCidade && correspondeCategoria && correspondeTexto;
   }).toList();
 }

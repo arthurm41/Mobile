@@ -51,8 +51,9 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
   }
 
   Future<void> _abrirFormulario({Local? local}) async {
-    final cidadePadrao =
-        _cidadeSelecionada == 'Todas' ? 'São Paulo' : _cidadeSelecionada;
+    final cidadePadrao = _cidadeSelecionada == 'Todas'
+        ? 'São Paulo'
+        : _cidadeSelecionada;
 
     await showModalBottomSheet(
       context: context,
@@ -60,10 +61,8 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => LocalFormDialog(
-        local: local,
-        cidadeInicial: cidadePadrao,
-      ),
+      builder: (_) =>
+          LocalFormDialog(local: local, cidadeInicial: cidadePadrao),
     );
   }
 
@@ -117,6 +116,14 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
           }
 
           final locais = snapshot.data ?? [];
+          final cidades = <String>{
+            ..._cidades,
+            ...locais.map((local) => local.cidade),
+          }.toList();
+          final categorias = <String>{
+            ..._categorias,
+            ...locais.map((local) => local.categoria),
+          }.toList();
           final listaFiltrada = filtrarLocais(
             locais,
             _pesquisaController.text,
@@ -154,7 +161,7 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        items: _cidades
+                        items: cidades
                             .map(
                               (cidade) => DropdownMenuItem(
                                 value: cidade,
@@ -178,7 +185,7 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        items: _categorias
+                        items: categorias
                             .map(
                               (categoria) => DropdownMenuItem(
                                 value: categoria,
@@ -199,7 +206,9 @@ class _ResultadosScreenState extends State<ResultadosScreen> {
               Expanded(
                 child: listaFiltrada.isEmpty
                     ? const Center(
-                        child: Text('Nenhum local encontrado para os filtros atuais.'),
+                        child: Text(
+                          'Nenhum local encontrado para os filtros atuais.',
+                        ),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

@@ -6,11 +6,7 @@ class LocalFormDialog extends StatefulWidget {
   final Local? local;
   final String cidadeInicial;
 
-  const LocalFormDialog({
-    super.key,
-    this.local,
-    required this.cidadeInicial,
-  });
+  const LocalFormDialog({super.key, this.local, required this.cidadeInicial});
 
   @override
   State<LocalFormDialog> createState() => _LocalFormDialogState();
@@ -60,18 +56,45 @@ class _LocalFormDialogState extends State<LocalFormDialog> {
     super.dispose();
   }
 
+  double? _parseNumero(String value) =>
+      double.tryParse(value.trim().replaceAll(',', '.'));
+
+  String? _validarAvaliacao(String? value) {
+    final avaliacao = value == null ? null : _parseNumero(value);
+    if (avaliacao == null || !avaliacao.isFinite) {
+      return 'Informe uma avaliação válida';
+    }
+    if (avaliacao < 0 || avaliacao > 5) {
+      return 'Use um valor entre 0 e 5';
+    }
+    return null;
+  }
+
+  String? _validarDistancia(String? value) {
+    final distancia = value == null ? null : _parseNumero(value);
+    if (distancia == null || !distancia.isFinite) {
+      return 'Informe uma distância válida';
+    }
+    if (distancia < 0) {
+      return 'A distância não pode ser negativa';
+    }
+    return null;
+  }
+
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
+    final avaliacao = _parseNumero(_avaliacaoController.text)!;
+    final distancia = _parseNumero(_distanciaController.text)!;
     final local = Local(
       id: widget.local?.id ?? '',
       nome: _nomeController.text.trim(),
       categoria: _categoriaController.text.trim(),
       cidade: _cidadeController.text.trim(),
-      avaliacao: double.tryParse(_avaliacaoController.text) ?? 0.0,
-      distancia: double.tryParse(_distanciaController.text) ?? 0.0,
+      avaliacao: avaliacao,
+      distancia: distancia,
       horario: _horarioController.text.trim(),
       descricao: _descricaoController.text.trim(),
       favorito: widget.local?.favorito ?? false,
@@ -133,22 +156,25 @@ class _LocalFormDialogState extends State<LocalFormDialog> {
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nomeController,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Informe o nome' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Informe o nome'
+                      : null,
                   decoration: const InputDecoration(labelText: 'Nome'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _categoriaController,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Informe a categoria' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Informe a categoria'
+                      : null,
                   decoration: const InputDecoration(labelText: 'Categoria'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _cidadeController,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Informe a cidade' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Informe a cidade'
+                      : null,
                   decoration: const InputDecoration(labelText: 'Cidade'),
                 ),
                 const SizedBox(height: 12),
@@ -157,16 +183,26 @@ class _LocalFormDialogState extends State<LocalFormDialog> {
                     Expanded(
                       child: TextFormField(
                         controller: _avaliacaoController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Avaliação'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: _validarAvaliacao,
+                        decoration: const InputDecoration(
+                          labelText: 'Avaliação',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
                         controller: _distanciaController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Distância (km)'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: _validarDistancia,
+                        decoration: const InputDecoration(
+                          labelText: 'Distância (km)',
+                        ),
                       ),
                     ),
                   ],
@@ -195,7 +231,9 @@ class _LocalFormDialogState extends State<LocalFormDialog> {
                     Expanded(
                       child: FilledButton(
                         onPressed: _salvar,
-                        child: Text(widget.local == null ? 'Salvar' : 'Atualizar'),
+                        child: Text(
+                          widget.local == null ? 'Salvar' : 'Atualizar',
+                        ),
                       ),
                     ),
                   ],
